@@ -1,0 +1,66 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/app
+    docker:
+      - image: elixir:1.5.1
+        environment:
+          - MIX_ENV: test
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+            - v1-mix-cache-{{ .Branch }}
+            - v1-mix-cache
+      - restore_cache:
+          keys:
+            - v1-build-cache-{{ .Branch }}
+            - v1-build-cache
+      - run:
+          name: Install dependencies
+          command: |
+            mix local.rebar --force
+            mix local.hex --force
+            mix deps.get
+
+      - run:
+          name: Compile the app
+          command: mix compile
+
+      - save_cache:
+          key: v1-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+          paths: "deps"
+      - save_cache:
+          key: v1-mix-cache-{{ .Branch }}
+          paths: "deps"
+      - save_cache:
+          key: v1-mix-cache
+          paths: "deps"
+      - save_cache:
+          key: v1-build-cache-{{ .Branch }}
+          paths: "_build"
+      - save_cache:
+          key: v1-build-cache
+          paths: "_build"
+
+      - run:
+          name: Setup Heroku
+          command: |
+            sh .circleci/setup-heroku.sh
+
+      - run:
+          name: Running tests
+          command: mix test
+
+      - add_ssh_keys:
+          fingerprints:
+            - "ff:93:e5:aa:c2:60:4d:5d:5a:0a:ce:ce:47:cd:42:41"
+
+      - deploy:
+          name: Deploy Master to Heroku
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              git push heroku master
+            fi

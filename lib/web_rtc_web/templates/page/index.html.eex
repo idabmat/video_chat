@@ -1,0 +1,12 @@
+<h1>Web RTC playground</h1>
+<div class="row">
+  <div class="col-sm-4">
+    <video id="localVideo" autoplay></video>
+    <div class="text-center">
+      <button id="callButton" class="btn btn-primary">Start call</button>
+    </div>
+  </div>
+  <div class="col-sm-8">
+    <video id="remoteVideo" autoplay></video>
+  </div>
+</div>
